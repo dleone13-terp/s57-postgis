@@ -131,21 +131,19 @@ std::string S57::geometryToGeoJson(void* geometryPtr) const {
     if (!geometry) return "{}";
 
     // Transform to WGS84 if needed
-    OGRSpatialReference* wgs84 = new OGRSpatialReference();
-    wgs84->SetWellKnownGeogCS("WGS84");
-    wgs84->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    OGRSpatialReference wgs84;
+    wgs84.SetWellKnownGeogCS("WGS84");
+    wgs84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     const OGRSpatialReference* srcSRS = geometry->getSpatialReference();
-    if (srcSRS && !srcSRS->IsSame(wgs84)) {
+    if (srcSRS && !srcSRS->IsSame(&wgs84)) {
         OGRCoordinateTransformation* transform = 
-            OGRCreateCoordinateTransformation(srcSRS, wgs84);
+            OGRCreateCoordinateTransformation(srcSRS, &wgs84);
         if (transform) {
             geometry->transform(transform);
             OGRCoordinateTransformation::DestroyCT(transform);
         }
     }
-    
-    wgs84->Release();
 
     // Export to GeoJSON
     char* json = geometry->exportToJson();
